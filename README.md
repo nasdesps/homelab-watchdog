@@ -37,3 +37,38 @@ detected by an external observer.
 - Alert-only by design — it does not auto-remediate
 
 ## State machine
+- home server reachable    → reset failure counter; if previously DOWN, send recovery
+
+- home server unreachable   → increment failure counter
+
+- counter >= 2 AND was UP → send DOWN alert, mark DOWN
+
+State is tracked in two files in the home directory (`.pbalab_watcher_state`
+and `.pbalab_watcher_fails`), so the script is stateless between cron runs and
+remembers whether it has already alerted.
+
+## Security
+
+- The Discord webhook URL is loaded from `~/.watcher_env` (chmod 600), never
+  hardcoded in the script and never committed to git
+- State files live in the home directory, outside this repo
+
+## Deployment
+
+```bash
+# On the external (Oracle) node:
+cp pbalab-watcher.sh ~/scripts/pbalab-watcher.sh
+chmod +x ~/scripts/pbalab-watcher.sh
+
+# Create the secret file:
+echo 'DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."' > ~/.watcher_env
+chmod 600 ~/.watcher_env
+
+# Schedule it every 2 minutes:
+crontab -e
+# */2 * * * * /bin/bash /home/ubuntu/scripts/pbalab-watcher.sh >> /home/ubuntu/pbalab-watcher.log 2>&1
+```
+
+## Stack
+
+Bash · cron · curl · Tailscale · Discord webhooks · Oracle Cloud
