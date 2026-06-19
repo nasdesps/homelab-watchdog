@@ -1,0 +1,5 @@
+# Secrets and state — never commit
+.watcher_env
+*.env
+.pbalab_watcher_state
+.pbalab_watcher_fails
